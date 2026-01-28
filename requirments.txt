@@ -1,3 +1,0 @@
-# Optional server-side QR generation dependency.
-qrcode[pil]
-Pillow
