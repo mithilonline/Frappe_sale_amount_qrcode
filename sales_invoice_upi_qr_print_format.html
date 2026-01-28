@@ -1,0 +1,39 @@
+<!--
+Print Format (HTML) for Sales Invoice: embeds a UPI QR code.
+Instructions:
+1. Create a Custom Field on Company (or Sales Invoice) called "upi_vpa" (Data)
+   - Doctype: Company (or Sales Invoice)
+   - Fieldname: upi_vpa
+   - Label: UPI VPA
+2. Create a new Print Format for Sales Invoice and paste this HTML as the template.
+3. When printing, the QR will be generated using api.qrserver.com image endpoint.
+-->
+<div class="print-format">
+  <!-- Your existing invoice layout goes here. Below is the QR snippet. -->
+  {% set company_doc = frappe.get_doc("Company", doc.company) %}
+  {% set upi_vpa = (doc.get("upi_vpa") or company_doc.get("upi_vpa") or frappe.db.get_value("Company", doc.company, "upi_vpa")) %}
+  {% if upi_vpa %}
+    {% set amount = ('%.2f' % (doc.grand_total or 0.0)) %}
+    {% set payee = (company_doc.get("company_name") or company_doc.get("name") or '') %}
+    {% set customer = (doc.customer_name or '') %}
+    {% set tn = "Invoice%20" + (doc.name or '') %}
+    {% set upi_uri = 'upi://pay?pa=' + upi_vpa + '&pn=' + payee + '&am=' + amount + '&cu=INR&tn=' + tn %}
+    <div style="margin-top: 12px; text-align: center;">
+      <div style="display:inline-block;">
+        <img
+          src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ upi_uri|urlencode }}"
+          alt="UPI QR Code"
+          style="width:200px; height:200px; display:block; margin: 0 auto;"
+        />
+        <div style="text-align:center; font-size:12px; margin-top:6px;">
+          Pay using UPI: <strong>{{ upi_vpa }}</strong><br>
+          Amount: <strong>₹{{ amount }}</strong>
+        </div>
+      </div>
+    </div>
+  {% else %}
+    <div style="margin-top: 12px; text-align: center; color: #a00;">
+      UPI VPA not configured. Add a custom field <em>upi_vpa</em> to Company or the Sales Invoice.
+    </div>
+  {% endif %}
+</div>
